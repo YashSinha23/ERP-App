@@ -3,14 +3,13 @@ import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDlZ3K1vKwZ3LAqJ8-sgv7RPcLOEwgAaSk",
-  authDomain: "python-powered-logs-entry.firebaseapp.com",
-  databaseURL: "https://python-powered-logs-entry-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "python-powered-logs-entry",
-  storageBucket: "python-powered-logs-entry.firebasestorage.app",
-  messagingSenderId: "403246847260",
-  appId: "1:403246847260:web:30d8dd50204668cd5e56d9",
-  measurementId: "G-9L5S6GXTJX"
+  apiKey: "AIzaSyCO8z1plQkLpZr_G0fxygQr_Nqaa2RYyF0",
+  authDomain: "almed-c945b.firebaseapp.com",
+  projectId: "almed-c945b",
+  storageBucket: "almed-c945b.firebasestorage.app",
+  messagingSenderId: "1011231570413",
+  appId: "1:1011231570413:web:829b1dbb13a43956420fe4",
+  measurementId: "G-GHDQWMSR0N"
 };
 
 const app = initializeApp(firebaseConfig)

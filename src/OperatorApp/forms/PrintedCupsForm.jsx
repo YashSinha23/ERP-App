@@ -78,14 +78,20 @@ const PrintedCupsForm = () => {
 
             if (printedStockSnap.exists()) {
                 await updateDoc(printedStockRef, {
-                    quantity: increment(produced)
+                    quantity: increment(produced),
+                    printing_label: printingLabel,
+                    last_updated: new Date()
                 })
             } else {
                 await setDoc(printedStockRef, {
                     type: cupType,
-                    quantity: produced
+                    quantity: produced,
+                    printing_label: printingLabel,
+                    last_updated: new Date()
                 })
             }
+
+
 
             await addDoc(collection(db, 'printed_cups_logs'), {
                 timestamp: new Date(),

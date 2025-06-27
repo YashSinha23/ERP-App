@@ -111,10 +111,11 @@ function App() {
                 <th>Timestamp</th>
                 <th>Shift</th>
                 <th>Operator</th>
+                <th>Cavity</th>
                 <th>Sheet Used</th>
                 <th>Sheet Consumed</th>
                 <th>Cups Produced</th>
-                <th>Cavity</th>
+                <th>Rejected Cups</th>
               </>
             ) : isSheetLog ? (
               <>
@@ -125,8 +126,10 @@ function App() {
                 <th>Thickness</th>
                 <th>Primary Material</th>
                 <th>Additives</th>
-                <th>Scrap (kg)</th>
-                <th>Total Produced (kg)</th>
+                <th>Gola Scrap (kg)</th>
+                <th>Sheet Scrap (kg)</th>
+                <th>Usable Sheet (kg)</th>
+
               </>
             ) : isPrintedLog ? (
               <>
@@ -136,12 +139,15 @@ function App() {
                 <th>Cup Type</th>
                 <th>Cups Produced</th>
                 <th>Rejected Cups</th>
+                <th>Printing Label</th>
               </>
             ) : isCupStock || isPrintedStock ? (
               <>
                 <th>{isPrintedStock ? 'Printed Cup Type' : 'Cup Type'}</th>
                 <th>Quantity</th>
+                {isPrintedStock && <th>Printing Label</th>}
                 <th>Last Updated</th>
+
               </>
             ) : isLog ? (
               <>
@@ -167,10 +173,11 @@ function App() {
                   <td>{safeTimestamp(item.timestamp)}</td>
                   <td>{item.shift || '-'}</td>
                   <td>{item.operator || '-'}</td>
+                  <td>{item.cavity || '-'}</td>
                   <td>{item.sheet_used || '-'}</td>
                   <td>{item.sheet_consumed || '-'}</td>
                   <td>{item.cups_produced || '-'}</td>
-                  <td>{item.cavity || '-'}</td>
+                  <td>{item.rejected_cups || '-'}</td>
                 </>
               ) : isSheetLog ? (
                 <>
@@ -185,8 +192,9 @@ function App() {
                       ? Object.entries(item.additives).map(([k, v]) => `${k}: ${v}`).join(', ')
                       : '-'}
                   </td>
-                  <td>{item.scrap || '-'}</td>
-                  <td>{item.total_production || '-'}</td>
+                  <td>{item.gola_scrap || '-'}</td>
+                  <td>{item.sheet_scrap || '-'}</td>
+                  <td>{item.sheet_usable || '-'}</td>
                 </>
               ) : isPrintedLog ? (
                 <>
@@ -196,12 +204,15 @@ function App() {
                   <td>{item.cup_type || '-'}</td>
                   <td>{item.cups_produced || '-'}</td>
                   <td>{item.rejected_cups || '-'}</td>
+                  <td>{item.printing_label || '-'}</td>
                 </>
               ) : isCupStock || isPrintedStock ? (
                 <>
                   <td>{item.id || '-'}</td>
                   <td>{item.quantity || '-'}</td>
+                  {isPrintedStock && <td>{item.printing_label || '-'}</td>}
                   <td>{safeTimestamp(item.last_updated)}</td>
+
                 </>
               ) : isLog ? (
                 <>
