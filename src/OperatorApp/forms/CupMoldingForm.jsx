@@ -9,6 +9,7 @@ import {
     setDoc,
     Timestamp
 } from 'firebase/firestore'
+import { deleteDoc } from 'firebase/firestore'
 
 const CupMoldingForm = () => {
     const [cupShift, setCupShift] = useState('')
@@ -21,19 +22,8 @@ const CupMoldingForm = () => {
     const [availableSheets, setAvailableSheets] = useState([])
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
-
-    const cavitySpecs = {
-        1: { diameter: 50, ml: 100, height: 60, weight: 3 },
-        2: { diameter: 55, ml: 120, height: 62, weight: 3.2 },
-        3: { diameter: 60, ml: 150, height: 65, weight: 3.5 },
-        4: { diameter: 65, ml: 180, height: 67, weight: 3.8 },
-        5: { diameter: 70, ml: 200, height: 70, weight: 4 },
-        6: { diameter: 75, ml: 220, height: 72, weight: 4.2 },
-        7: { diameter: 80, ml: 250, height: 75, weight: 4.5 },
-        8: { diameter: 85, ml: 300, height: 77, weight: 4.7 },
-        9: { diameter: 90, ml: 330, height: 80, weight: 5 },
-        10: { diameter: 95, ml: 350, height: 85, weight: 5.2 }
-    }
+    const [showCavityEditor, setShowCavityEditor] = useState(false)
+    const [editableSpecs, setEditableSpecs] = useState({})
 
     useEffect(() => {
         const fetchSheets = async () => {
@@ -45,7 +35,16 @@ const CupMoldingForm = () => {
             })
             setAvailableSheets(options)
         }
+        const fetchCavitySpecs = async () => {
+            const snapshot = await getDocs(collection(db, 'cavity_specs'))
+            const specs = {}
+            snapshot.forEach(doc => {
+                specs[doc.id] = doc.data()
+            })
+            setEditableSpecs(specs)
+        }
 
+        fetchCavitySpecs()
         fetchSheets()
     }, [])
 
@@ -61,7 +60,7 @@ const CupMoldingForm = () => {
         const consumed = parseFloat(sheetConsumed)
         const produced = parseInt(cupsProduced)
         const rejected = parseInt(rejectedCups)
-        const cavityData = cavitySpecs[cavity] || {}
+        const cavityData = editableSpecs[cavity] || {}
 
         try {
             const sheetRef = doc(db, 'sheet_stock', sheetUsed)
@@ -155,10 +154,12 @@ const CupMoldingForm = () => {
                 <label style={labelStyle}>Cavity</label>
                 <select value={cavity} onChange={(e) => setCavity(e.target.value)} required style={inputStyle}>
                     <option value="" disabled>Select Cavity</option>
-                    {[...Array(10)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>Cavity {i + 1}</option>
+                    {Object.keys(editableSpecs).map(id => (
+                        <option key={id} value={id}>Cavity {id}</option>
                     ))}
                 </select>
+
+
 
                 <label style={labelStyle}>Sheet Used</label>
                 <select value={sheetUsed} onChange={(e) => setSheetUsed(e.target.value)} required style={inputStyle}>
@@ -198,7 +199,25 @@ const CupMoldingForm = () => {
                     style={inputStyle}
                 />
 
-                <button type="submit" style={submitBtnStyle}>Submit</button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '1rem' }}>
+                    <button
+                        onClick={() => setShowCavityEditor(true)}
+                        type="button"
+                        style={{
+                            backgroundColor: '#97BC62',
+                            color: 'white',
+                            padding: '10px 20px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🛠 Edit Cavity Specs
+                    </button>
+
+                    <button type="submit" style={submitBtnStyle}>Submit</button>
+                </div>
             </form>
 
             {showConfirm && (
@@ -222,6 +241,137 @@ const CupMoldingForm = () => {
                     </div>
                 </div>
             )}
+            {showCavityEditor && (
+                <div style={overlayStyle}>
+                    <div style={{
+                        backgroundColor: '#fff',
+                        borderRadius: '12px',
+                        padding: '2rem',
+                        width: '95%',
+                        maxWidth: '800px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
+                    }}>
+                        <h2 style={{ color: '#2C5F2D', marginBottom: '1rem' }}>Edit Cavity Specs</h2>
+
+                        {Object.entries(editableSpecs).map(([id, spec], idx) => (
+                            <div key={id} style={{
+                                marginBottom: '1.5rem',
+                                paddingBottom: '1rem',
+                                borderBottom: '1px solid #ddd',
+                                position: 'relative'
+                            }}>
+                                <h4 style={{ marginBottom: '0.5rem', color: '#2C5F2D' }}>
+                                    Cavity {id}
+                                </h4>
+
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const updated = { ...editableSpecs }
+                                            delete updated[id]
+                                            setEditableSpecs(updated)
+                                            await deleteDoc(doc(db, 'cavity_specs', id))
+                                            alert(`🗑️ Deleted Cavity ${id} from Firestore.`)
+                                        } catch (err) {
+                                            console.error(err)
+                                            alert("❌ Failed to delete cavity spec.")
+                                        }
+                                    }}
+
+                                    style={{
+                                        position: 'absolute',
+                                        top: '0',
+                                        right: '0',
+                                        backgroundColor: '#e74c3c',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '4px 8px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    🗑 Delete
+                                </button>
+
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                                    gap: '12px',
+                                    marginTop: '1rem'
+                                }}>
+                                    {['diameter', 'ml', 'lip', 'collar', 'height', 'bottom', 'weight'].map(key => (
+                                        <div key={key}>
+                                            <label style={{ fontSize: '14px', fontWeight: 'bold', color: '#555' }}>
+                                                {key.charAt(0).toUpperCase() + key.slice(1)}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder={key}
+                                                value={spec[key] ?? ''}
+                                                onChange={e => {
+                                                    const updated = { ...editableSpecs }
+                                                    updated[id][key] = parseFloat(e.target.value)
+                                                    setEditableSpecs(updated)
+                                                }}
+                                                style={{ ...inputStyle, marginTop: '4px', width: '100%' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+
+
+                        <button
+                            onClick={() => {
+                                const newId = String(Object.keys(editableSpecs).length + 1)
+                                setEditableSpecs({
+                                    ...editableSpecs,
+                                    [newId]: {
+                                        diameter: 0,
+                                        ml: 0,
+                                        lip: 0,
+                                        collar: 0,
+                                        height: 0,
+                                        bottom: 0,
+                                        weight: 0
+                                    }
+                                })
+                            }}
+                            style={{ ...submitBtnStyle, marginTop: '1rem', backgroundColor: '#97BC62' }}
+                        >
+                            ➕ Add Cavity
+                        </button>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem' }}>
+                            <button onClick={() => setShowCavityEditor(false)} style={cancelBtn}>Cancel</button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const promises = Object.entries(editableSpecs).map(([id, spec]) =>
+                                            setDoc(doc(db, 'cavity_specs', id), spec)
+                                        )
+                                        await Promise.all(promises)
+                                        alert("✅ All cavity specs saved to Firestore.")
+                                        setShowCavityEditor(false)
+                                    } catch (err) {
+                                        console.error(err)
+                                        alert("❌ Error saving cavity specs.")
+                                    }
+                                }}
+                                style={confirmBtn}
+                            >
+                                💾 Save Specs
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
         </>
     )
 }
