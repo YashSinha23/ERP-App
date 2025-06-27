@@ -1,13 +1,41 @@
 {
   "name": "unified-logs-app",
+  "version": "1.0.2",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "description": "Unified Logs App for managing factory logs and inventory",
+  "author": "Yash Sinha",
+  "main": "main.cjs",
+  "build": {
+    "appId": "com.yash.unifiedlogs",
+    "productName": "Unified Logs App",
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "YashSinha23",
+        "repo": "ERP-App"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -31,6 +59,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.5.2",
+    "electron": "^37.1.0",
     "electron-builder": "^26.0.12",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",

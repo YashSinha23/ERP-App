@@ -18,7 +18,7 @@ const Login = ({ onSuccess }) => {
     return (
         <div style={outerWrapper}>
             <form onSubmit={handleSubmit} style={formStyle}>
-                <FaUserTie size={50} color="#f05d0e" />
+                <FaUserTie size={50} color="#2C5F2D" />
                 <h2 style={headingStyle}>Manager Login</h2>
                 <input
                     type="password"
@@ -56,7 +56,7 @@ const formStyle = {
 }
 
 const headingStyle = {
-    color: '#f05d0e',
+    color: '#2C5F2D',
     fontSize: '1.8rem',
     fontWeight: 'bold',
 }
@@ -71,7 +71,7 @@ const inputStyle = {
 
 const btnStyle = {
     padding: '10px',
-    backgroundColor: '#f05d0e',
+    backgroundColor: '#2C5F2D',
     color: 'white',
     fontWeight: 'bold',
     fontSize: '16px',

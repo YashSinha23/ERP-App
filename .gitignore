@@ -22,3 +22,55 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Node modules
+node_modules/
+
+# Build outputs (Vite + Electron Builder)
+dist/
+dist-ssr/
+out/
+build/
+*.local
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor configs
+.vscode/
+.idea/
+
+# Firebase (optional cache/state)
+.firebase/
+.firebaserc
+
+# Environment variables
+.env
+.env.*.local
+
+# Electron build artifacts
+*.exe
+*.dmg
+*.AppImage
+*.blockmap
+*.yml
+
+# ASAR packages
+*.asar
+
+# Mac system junk
+*.swp
+*.swo
+
+# VS Code settings
+.vscode/
+
+# OS junk
+*.bak
+*.tmp
