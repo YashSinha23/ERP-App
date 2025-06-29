@@ -86,7 +86,7 @@ function RawMaterialForm() {
                 <input
                     type="number"
                     min="1"
-                    value={quantity}
+                    value={quantity ?? ''}
                     onChange={(e) => setQuantity(e.target.value)}
                     onWheel={(e) => e.target.blur()}
                     required
