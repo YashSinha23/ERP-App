@@ -8,8 +8,11 @@ import {
     getDocs,
     updateDoc,
     setDoc,
-    increment
+    increment,
+    Timestamp
 } from 'firebase/firestore'
+import dayjs from 'dayjs'
+import DateTimeInput from '../../DateTimeInput'
 
 const PrintedCupsForm = () => {
     const [printShift, setPrintShift] = useState('')
@@ -21,6 +24,8 @@ const PrintedCupsForm = () => {
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [printingLabel, setPrintingLabel] = useState('')
+    const [timestamp, setTimestamp] = useState(dayjs())
+
 
 
     useEffect(() => {
@@ -47,6 +52,7 @@ const PrintedCupsForm = () => {
 
         const produced = parseInt(printedCupsProduced)
         const rejected = parseInt(rejectedCups)
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp)) // ✅ correct position
 
         try {
             const cupType = cupsUsed
@@ -69,10 +75,13 @@ const PrintedCupsForm = () => {
                 return
             }
 
+            // 🔁 Deduct from plain cup stock
             await updateDoc(cupsStockRef, {
-                quantity: currentCupQty - produced
+                quantity: currentCupQty - produced,
+                last_updated: convertedTimestamp
             })
 
+            // ✅ Add to printed cup stock
             const printedStockRef = doc(db, 'printed_cups_stock', cupType)
             const printedStockSnap = await getDoc(printedStockRef)
 
@@ -80,21 +89,20 @@ const PrintedCupsForm = () => {
                 await updateDoc(printedStockRef, {
                     quantity: increment(produced),
                     printing_label: printingLabel,
-                    last_updated: new Date()
+                    last_updated: convertedTimestamp
                 })
             } else {
                 await setDoc(printedStockRef, {
                     type: cupType,
                     quantity: produced,
                     printing_label: printingLabel,
-                    last_updated: new Date()
+                    last_updated: convertedTimestamp
                 })
             }
 
-
-
+            // 📝 Log the printed operation
             await addDoc(collection(db, 'printed_cups_logs'), {
-                timestamp: new Date(),
+                timestamp: convertedTimestamp,
                 shift: printShift,
                 operator: printOperator,
                 cup_type: cupType,
@@ -102,8 +110,6 @@ const PrintedCupsForm = () => {
                 rejected_cups: rejected,
                 printing_label: printingLabel
             })
-
-
 
             alert("✅ Printed cup log submitted and inventory updated!")
             resetForm()
@@ -116,6 +122,7 @@ const PrintedCupsForm = () => {
         }
     }
 
+
     const resetForm = () => {
         setPrintShift('')
         setPrintOperator('')
@@ -127,6 +134,7 @@ const PrintedCupsForm = () => {
     return (
         <>
             <form onSubmit={handleInitialSubmit} style={formStyle}>
+                <DateTimeInput value={timestamp} onChange={setTimestamp} />
                 <label style={labelStyle}>Shift</label>
                 <select value={printShift} onChange={(e) => setPrintShift(e.target.value)} required style={inputStyle}>
                     <option value="" disabled>Select Shift</option>

@@ -42,7 +42,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.1.2",
-    "@mui/x-date-pickers": "^8.5.3",
+    "@mui/x-date-pickers": "^8.6.0",
     "dayjs": "^1.11.13",
     "electron-updater": "^6.6.2",
     "file-saver": "^2.0.5",

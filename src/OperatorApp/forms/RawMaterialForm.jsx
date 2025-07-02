@@ -8,12 +8,17 @@ import {
     setDoc,
     Timestamp
 } from 'firebase/firestore'
+import dayjs from 'dayjs'
+import DateTimeInput from '../../DateTimeInput'
+
 
 function RawMaterialForm() {
     const [material, setMaterial] = useState('')
     const [quantity, setQuantity] = useState('')
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [timestamp, setTimestamp] = useState(dayjs())
+
 
     const handleInitialSubmit = (e) => {
         e.preventDefault()
@@ -28,7 +33,7 @@ function RawMaterialForm() {
     const handleConfirm = async () => {
         setSubmitting(true)
         const qty = parseFloat(quantity)
-        const timestamp = Timestamp.now()
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp)) // ✅ Corrected assignment
 
         try {
             const stockRef = doc(db, 'raw_material_stock', material)
@@ -40,13 +45,13 @@ function RawMaterialForm() {
                 material_type: material,
                 quantity: qty,
                 operation: 'inward',
-                timestamp
+                timestamp: convertedTimestamp
             })
 
             // Update stock
             await setDoc(stockRef, {
                 quantity: currentQty + qty,
-                last_updated: timestamp
+                last_updated: convertedTimestamp
             })
 
             alert('✅ Entry saved and stock updated.')
@@ -61,9 +66,11 @@ function RawMaterialForm() {
         }
     }
 
+
     return (
         <>
             <form onSubmit={handleInitialSubmit} style={formStyle}>
+                <DateTimeInput value={timestamp} onChange={setTimestamp} />
                 <label style={labelStyle}>Material Type</label>
                 <select
                     value={material}

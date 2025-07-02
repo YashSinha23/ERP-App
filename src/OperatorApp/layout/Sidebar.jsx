@@ -1,3 +1,5 @@
+import BackButton from '../../BackButton' // adjust path if needed
+
 const formCategories = [
     { id: 'raw_material_form', label: 'Raw Material Form' },
     { id: 'sheet_forming_form', label: 'Sheet Forming Form' },
@@ -18,26 +20,37 @@ const Sidebar = ({ selected, onSelect }) => (
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'space-between',
         zIndex: 100
     }}>
-        {formCategories.map(cat => (
-            <button
-                key={cat.id}
-                onClick={() => onSelect(cat.id)}
-                style={{
-                    backgroundColor: selected === cat.id ? '#97BC62' : 'transparent',
-                    color: selected === cat.id ? '#2C5F2D' : 'white',
-                    border: 'none',
-                    padding: '15px 20px',
-                    textAlign: 'left',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                }}
-            >
-                {cat.label}
-            </button>
-        ))}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {formCategories.map(cat => (
+                <button
+                    key={cat.id}
+                    onClick={() => onSelect(cat.id)}
+                    style={{
+                        all: 'unset', // ✅ Reset to avoid default browser button styling
+                        display: 'block',
+                        width: '100%',
+                        padding: '15px 20px',
+                        backgroundColor: selected === cat.id ? '#97BC62' : 'transparent',
+                        color: selected === cat.id ? '#2C5F2D' : 'white',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        textAlign: 'left',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {cat.label}
+                </button>
+            ))}
+        </div>
+
+        {selected && (
+            <div style={{ padding: '1rem' }}>
+                <BackButton label="⬅ Back" />
+            </div>
+        )}
     </div>
 )
 

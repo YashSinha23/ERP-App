@@ -3,6 +3,10 @@ import RoleSelector from './pages/RoleSelector'
 import Login from './pages/Login'
 import OperatorApp from './OperatorApp/App'
 import ManagerApp from './ManagerApp/App'
+import ManagerDashboard from './ManagerApp/pages/ManagerDashboard'
+import ManagerLogsViewer from './ManagerApp/pages/ManagerLogsViewer'
+import LiveInventory from './ManagerApp/pages/LiveInventory'
+import EditCavitySpecs from './ManagerApp/pages/EditCavitySpecs'
 import { useState } from 'react'
 
 function App() {
@@ -12,8 +16,10 @@ function App() {
     <Routes>
       <Route path="/" element={<RoleSelector />} />
       <Route path="/operator" element={<OperatorApp />} />
+
+      {/* Manager Routes */}
       <Route
-        path="/manager"
+        path="/manager/*"
         element={
           authenticated
             ? <ManagerApp />

@@ -12,7 +12,8 @@ import {
     setDoc,
     Timestamp
 } from 'firebase/firestore'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import dayjs from 'dayjs'
+import DateTimeInput from '../../DateTimeInput'
 
 
 const SheetFormingForm = () => {
@@ -28,6 +29,8 @@ const SheetFormingForm = () => {
     const [sheetScrap, setSheetScrap] = useState('')
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [timestamp, setTimestamp] = useState(dayjs())
+
 
 
     const additiveOptions = ['Master Batch', 'Styrene', 'GPPS', 'Crush', 'JJ']
@@ -82,9 +85,39 @@ const SheetFormingForm = () => {
             return
         }
 
-        const timestamp = Timestamp.now()
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp))
 
         try {
+            const sheetKey = `${size}_${thicknessVal}`
+            const stockRef = doc(db, 'sheet_stock', sheetKey)
+            const stockSnap = await getDoc(stockRef)
+            const currentQty = stockSnap.exists() ? stockSnap.data().quantity : 0
+
+            // 🔁 Check primary material
+            const primaryRef = doc(db, 'raw_material_stock', primary)
+            const primarySnap = await getDoc(primaryRef)
+            const currentPrimaryQty = primarySnap.exists() ? primarySnap.data().quantity : 0
+
+            if (primaryQtyNum > currentPrimaryQty) {
+                alert(`❌ Not enough ${primary} in stock. Available: ${currentPrimaryQty} kg`)
+                setSubmitting(false)
+                return
+            }
+
+            // 🔁 Check each additive stock
+            for (const [name, qty] of Object.entries(additivesUsed)) {
+                const addRef = doc(db, 'raw_material_stock', name)
+                const addSnap = await getDoc(addRef)
+                const currentAddQty = addSnap.exists() ? addSnap.data().quantity : 0
+
+                if (qty > currentAddQty) {
+                    alert(`❌ Not enough ${name} in stock. Available: ${currentAddQty} kg`)
+                    setSubmitting(false)
+                    return
+                }
+            }
+
+            // ✅ All validations passed → Log the sheet forming entry
             await addDoc(collection(db, 'sheet_forming_logs'), {
                 shift,
                 operator,
@@ -96,19 +129,33 @@ const SheetFormingForm = () => {
                 additives: additivesUsed,
                 gola_scrap: gola,
                 sheet_scrap: sheet,
-                timestamp
+                timestamp: convertedTimestamp
             })
 
-            const sheetKey = `${size}_${thicknessVal}`
-            const stockRef = doc(db, 'sheet_stock', sheetKey)
-            const stockSnap = await getDoc(stockRef)
-            const currentQty = stockSnap.exists() ? stockSnap.data().quantity : 0
+            // ✅ Deduct primary material
+            await setDoc(primaryRef, {
+                quantity: currentPrimaryQty - primaryQtyNum,
+                last_updated: convertedTimestamp
+            })
 
+            // ✅ Deduct additives
+            for (const [name, qty] of Object.entries(additivesUsed)) {
+                const addRef = doc(db, 'raw_material_stock', name)
+                const addSnap = await getDoc(addRef)
+                const currentAddQty = addSnap.exists() ? addSnap.data().quantity : 0
+
+                await setDoc(addRef, {
+                    quantity: currentAddQty - qty,
+                    last_updated: convertedTimestamp
+                })
+            }
+
+            // ✅ Update usable sheet stock
             await setDoc(stockRef, {
                 size,
                 thickness: thicknessVal,
                 quantity: currentQty + usable,
-                last_updated: timestamp
+                last_updated: convertedTimestamp
             })
 
             alert('✅ Log saved & stock updated!')
@@ -121,7 +168,8 @@ const SheetFormingForm = () => {
             setShowConfirm(false)
         }
     }
-    const COLORS = ['#2C5F2D', '#97BC62', '#FF6B6B', '#FFA500']
+
+
 
     const gola = parseFloat(golaScrap) || 0
     const sheet = parseFloat(sheetScrap) || 0
@@ -134,12 +182,6 @@ const SheetFormingForm = () => {
     }, 0)
 
     const totalUsed = primaryNum + additivesTotal + scrapTotal
-
-    const chartData = usableNum > 0 ? [
-        { name: 'Primary', value: primaryNum },
-        { name: 'Additives', value: additivesTotal },
-        { name: 'Scrap', value: scrapTotal }
-    ] : []
 
 
     const expectedUsable = primaryNum + additivesTotal - scrapTotal
@@ -165,75 +207,40 @@ const SheetFormingForm = () => {
 
     return (
         <>
-            {/* Live Pie Chart Card */}
             {sheetUsable && (
                 <div style={{
-                    position: 'absolute',
+                    position: 'fixed', // ✅ makes it stick to screen
                     top: '2rem',
                     right: '2rem',
-                    width: '340px',
-                    minHeight: '420px',
                     backgroundColor: '#fff',
+                    padding: '1.5rem',
                     borderRadius: '10px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                    padding: '1rem',
-                    zIndex: 500,
-                    display: 'flex',
-                    flexDirection: 'column'
+                    width: '350px',
+                    zIndex: 9999, // on top of all
+                    maxHeight: '90vh',
+                    overflowY: 'auto'
                 }}>
-                    <h4 style={{ color: '#2C5F2D', marginBottom: '0.5rem' }}>Production Breakdown</h4>
-
-                    <div style={{ width: '100%', height: '200px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={chartData}
-                                    dataKey="value"
-                                    nameKey="name"
-                                    cx="50%"
-                                    cy="50%"
-                                    outerRadius={70}
-                                    label={({ name, value }) => {
-                                        const percent = (value / usableNum) * 100
-                                        return `${name}: ${percent.toFixed(1)}%`
-                                    }}
-                                >
-                                    {chartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <h3 style={{ color: '#2C5F2D', marginBottom: '1rem' }}>Production Summary</h3>
+                    <p><b>Primary:</b> {primary}: {primaryNum} kg ({((primaryNum / totalUsed) * 100).toFixed(1)}%)</p>
+                    <p><b>Additives:</b> {additivesTotal} kg ({((additivesTotal / totalUsed) * 100).toFixed(1)}%)</p>
+                    <p><b>Scrap:</b> {scrapTotal} kg ({((scrapTotal / totalUsed) * 100).toFixed(1)}%)</p>
+                    <hr />
+                    <p><b>Total Production:</b> {totalUsed} kg (100%)</p>
+                    <div style={{ backgroundColor: '#ffe6e6', padding: '0.5rem', borderRadius: '6px', marginTop: '0.5rem' }}>
+                        <p><b style={{ color: '#a00000' }}>Gola Scrap:</b> {gola} kg ({((gola / totalUsed) * 100).toFixed(1)}%)</p>
+                        <p><b style={{ color: '#a00000' }}>Sheet Scrap:</b> {sheet} kg ({((sheet / totalUsed) * 100).toFixed(1)}%)</p>
                     </div>
-
-                    {/* Materials Breakdown Below Chart */}
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>
-                        <p><b>Primary Material:</b> {primary || 'N/A'} : {((primaryNum / usableNum) * 100).toFixed(1)}%</p>
-
-                        <p><b>Additives Used:</b></p>
-                        <ul style={{ paddingLeft: '1rem', margin: 0 }}>
-                            {Object.entries(additives).map(([key, val]) =>
-                                val.checked && val.qty ? (
-                                    <li key={key}>
-                                        {key} : {((parseFloat(val.qty) / usableNum) * 100).toFixed(1)}%
-                                    </li>
-                                ) : null
-                            )}
-                            {Object.values(additives).filter(a => a.checked && a.qty).length === 0 && (
-                                <li style={{ color: '#777' }}>None</li>
-                            )}
-                        </ul>
-
-                        <p><b>Scrap:</b> {(scrapTotal / usableNum * 100).toFixed(1)}%</p>
-                        <p><b>Total Used:</b> {(totalUsed / usableNum * 100).toFixed(1)}%</p>
-
-                    </div>
+                    <p style={{ marginTop: '0.5rem' }}>
+                        <b>Usable Sheet:</b> {usableNum} kg<br />
+                        <b>Match:</b> {matchPercentage.toFixed(1)}%{' '}
+                        {withinRange ? <span style={{ color: 'green' }}>✅</span> : <span style={{ color: 'red' }}>❌</span>}
+                    </p>
                 </div>
             )}
 
             <form style={formStyle}>
+                <DateTimeInput value={timestamp} onChange={setTimestamp} />
                 <label style={labelStyle}>Shift</label>
                 <select value={shift} onChange={e => setShift(e.target.value)} style={inputStyle} required>
                     <option value="" disabled>Select Shift</option>
@@ -498,7 +505,7 @@ const cancelBtn = {
 
 
 const submitBtnStyle = {
-    backgroundColor: '#ed8a55',
+    backgroundColor: '#1a73e8',
     color: 'white',
     padding: '10px 20px',
     border: 'none',

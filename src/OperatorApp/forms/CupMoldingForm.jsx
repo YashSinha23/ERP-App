@@ -9,7 +9,9 @@ import {
     setDoc,
     Timestamp
 } from 'firebase/firestore'
-import { deleteDoc } from 'firebase/firestore'
+import dayjs from 'dayjs'
+import DateTimeInput from '../../DateTimeInput'
+
 
 const CupMoldingForm = () => {
     const [cupShift, setCupShift] = useState('')
@@ -22,8 +24,10 @@ const CupMoldingForm = () => {
     const [availableSheets, setAvailableSheets] = useState([])
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
-    const [showCavityEditor, setShowCavityEditor] = useState(false)
-    const [editableSpecs, setEditableSpecs] = useState({})
+    const [cavitySpecs, setCavitySpecs] = useState({})
+    const [timestamp, setTimestamp] = useState(dayjs())
+
+
 
     useEffect(() => {
         const fetchSheets = async () => {
@@ -41,9 +45,8 @@ const CupMoldingForm = () => {
             snapshot.forEach(doc => {
                 specs[doc.id] = doc.data()
             })
-            setEditableSpecs(specs)
+            setCavitySpecs(specs)
         }
-
         fetchCavitySpecs()
         fetchSheets()
     }, [])
@@ -56,11 +59,11 @@ const CupMoldingForm = () => {
     const handleConfirm = async () => {
         setSubmitting(true)
 
-        const timestamp = Timestamp.now()
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp)) // ✅ Manual timestamp
         const consumed = parseFloat(sheetConsumed)
         const produced = parseInt(cupsProduced)
         const rejected = parseInt(rejectedCups)
-        const cavityData = editableSpecs[cavity] || {}
+        const cavityData = cavitySpecs[cavity] || {}
 
         try {
             const sheetRef = doc(db, 'sheet_stock', sheetUsed)
@@ -83,14 +86,16 @@ const CupMoldingForm = () => {
                 return
             }
 
+            // ✅ Update sheet stock
             await setDoc(sheetRef, {
                 ...sheetData,
                 quantity: availableQty - consumed,
-                last_updated: timestamp
+                last_updated: convertedTimestamp
             })
 
+            // ✅ Log cup molding
             await addDoc(collection(db, 'cup_molding_logs'), {
-                timestamp,
+                timestamp: convertedTimestamp,
                 shift: cupShift,
                 operator: cupOperator,
                 cavity: parseInt(cavity),
@@ -101,6 +106,7 @@ const CupMoldingForm = () => {
                 rejected_cups: rejected
             })
 
+            // ✅ Update cups stock
             const cupKey = `Cavity-${cavity}`
             const cupStockRef = doc(db, 'cups_stock', cupKey)
             const cupStockSnap = await getDoc(cupStockRef)
@@ -110,7 +116,7 @@ const CupMoldingForm = () => {
                 cavity: parseInt(cavity),
                 specs: cavityData,
                 quantity: currentCupQty + produced,
-                last_updated: timestamp
+                last_updated: convertedTimestamp
             })
 
             alert("✅ Cup Molding Log saved and sheet stock updated.")
@@ -123,7 +129,6 @@ const CupMoldingForm = () => {
             setShowConfirm(false)
         }
     }
-
     const resetForm = () => {
         setCupShift('')
         setCupOperator('')
@@ -134,9 +139,11 @@ const CupMoldingForm = () => {
         setRejectedCups('')
     }
 
+
     return (
         <>
             <form onSubmit={handleInitialSubmit} style={formStyle}>
+                <DateTimeInput value={timestamp} onChange={setTimestamp} />
                 <label style={labelStyle}>Shift</label>
                 <select value={cupShift} onChange={(e) => setCupShift(e.target.value)} required style={inputStyle}>
                     <option value="" disabled>Select Shift</option>
@@ -154,10 +161,11 @@ const CupMoldingForm = () => {
                 <label style={labelStyle}>Cavity</label>
                 <select value={cavity} onChange={(e) => setCavity(e.target.value)} required style={inputStyle}>
                     <option value="" disabled>Select Cavity</option>
-                    {Object.keys(editableSpecs).map(id => (
+                    {Object.keys(cavitySpecs).map(id => (
                         <option key={id} value={id}>Cavity {id}</option>
                     ))}
                 </select>
+
 
 
 
@@ -200,22 +208,6 @@ const CupMoldingForm = () => {
                 />
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '1rem' }}>
-                    <button
-                        onClick={() => setShowCavityEditor(true)}
-                        type="button"
-                        style={{
-                            backgroundColor: '#97BC62',
-                            color: 'white',
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        🛠 Edit Cavity Specs
-                    </button>
-
                     <button type="submit" style={submitBtnStyle}>Submit</button>
                 </div>
             </form>
@@ -241,137 +233,6 @@ const CupMoldingForm = () => {
                     </div>
                 </div>
             )}
-            {showCavityEditor && (
-                <div style={overlayStyle}>
-                    <div style={{
-                        backgroundColor: '#fff',
-                        borderRadius: '12px',
-                        padding: '2rem',
-                        width: '95%',
-                        maxWidth: '800px',
-                        maxHeight: '90vh',
-                        overflowY: 'auto'
-                    }}>
-                        <h2 style={{ color: '#2C5F2D', marginBottom: '1rem' }}>Edit Cavity Specs</h2>
-
-                        {Object.entries(editableSpecs).map(([id, spec], idx) => (
-                            <div key={id} style={{
-                                marginBottom: '1.5rem',
-                                paddingBottom: '1rem',
-                                borderBottom: '1px solid #ddd',
-                                position: 'relative'
-                            }}>
-                                <h4 style={{ marginBottom: '0.5rem', color: '#2C5F2D' }}>
-                                    Cavity {id}
-                                </h4>
-
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            const updated = { ...editableSpecs }
-                                            delete updated[id]
-                                            setEditableSpecs(updated)
-                                            await deleteDoc(doc(db, 'cavity_specs', id))
-                                            alert(`🗑️ Deleted Cavity ${id} from Firestore.`)
-                                        } catch (err) {
-                                            console.error(err)
-                                            alert("❌ Failed to delete cavity spec.")
-                                        }
-                                    }}
-
-                                    style={{
-                                        position: 'absolute',
-                                        top: '0',
-                                        right: '0',
-                                        backgroundColor: '#e74c3c',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        padding: '4px 8px',
-                                        cursor: 'pointer',
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    🗑 Delete
-                                </button>
-
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                                    gap: '12px',
-                                    marginTop: '1rem'
-                                }}>
-                                    {['diameter', 'ml', 'lip', 'collar', 'height', 'bottom', 'weight'].map(key => (
-                                        <div key={key}>
-                                            <label style={{ fontSize: '14px', fontWeight: 'bold', color: '#555' }}>
-                                                {key.charAt(0).toUpperCase() + key.slice(1)}
-                                            </label>
-                                            <input
-                                                type="number"
-                                                placeholder={key}
-                                                value={spec[key] ?? ''}
-                                                onChange={e => {
-                                                    const updated = { ...editableSpecs }
-                                                    updated[id][key] = parseFloat(e.target.value)
-                                                    setEditableSpecs(updated)
-                                                }}
-                                                style={{ ...inputStyle, marginTop: '4px', width: '100%' }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-
-
-
-                        <button
-                            onClick={() => {
-                                const newId = String(Object.keys(editableSpecs).length + 1)
-                                setEditableSpecs({
-                                    ...editableSpecs,
-                                    [newId]: {
-                                        diameter: 0,
-                                        ml: 0,
-                                        lip: 0,
-                                        collar: 0,
-                                        height: 0,
-                                        bottom: 0,
-                                        weight: 0
-                                    }
-                                })
-                            }}
-                            style={{ ...submitBtnStyle, marginTop: '1rem', backgroundColor: '#97BC62' }}
-                        >
-                            ➕ Add Cavity
-                        </button>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1.5rem' }}>
-                            <button onClick={() => setShowCavityEditor(false)} style={cancelBtn}>Cancel</button>
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        const promises = Object.entries(editableSpecs).map(([id, spec]) =>
-                                            setDoc(doc(db, 'cavity_specs', id), spec)
-                                        )
-                                        await Promise.all(promises)
-                                        alert("✅ All cavity specs saved to Firestore.")
-                                        setShowCavityEditor(false)
-                                    } catch (err) {
-                                        console.error(err)
-                                        alert("❌ Error saving cavity specs.")
-                                    }
-                                }}
-                                style={confirmBtn}
-                            >
-                                💾 Save Specs
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            )}
-
         </>
     )
 }
