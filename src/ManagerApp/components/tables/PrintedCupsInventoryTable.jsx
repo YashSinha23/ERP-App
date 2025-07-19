@@ -4,16 +4,18 @@ const PrintedCupsInventoryTable = ({ data, safeTimestamp }) => (
             <tr>
                 <th>Printed Cup Type</th>
                 <th>Quantity</th>
-                <th>Printing Label</th>
                 <th>Last Updated</th>
             </tr>
         </thead>
         <tbody>
             {data.map((item, i) => (
                 <tr key={i}>
-                    <td>{item.id || '-'}</td>
+                    <td>
+                        {item.specs && item.specs.Label
+                            ? `${item.specs.Label} ${item.specs['Volume (ml)']}`
+                            : item.id || '-'}
+                    </td>
                     <td>{item.quantity || '-'}</td>
-                    <td>{item.printing_label || '-'}</td>
                     <td>{safeTimestamp(item.last_updated)}</td>
                 </tr>
             ))}

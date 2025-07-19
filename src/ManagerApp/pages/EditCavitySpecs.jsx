@@ -11,12 +11,7 @@ import BackButton from '../../BackButton'
 
 const specFields = [
     'Diameter (mm)',
-    'Volume (ml)',
-    'Lip (mm)',
-    'Collar (mm)',
-    'Height (mm)',
-    'Bottom (mm)',
-    'Weight (grams)'
+    'Volume (ml)'
 ]
 
 const EditCavitySpecs = () => {
@@ -29,11 +24,12 @@ const EditCavitySpecs = () => {
 
             snapshot.forEach(docSnap => {
                 const rawData = docSnap.data()
-                // Only keep valid fields
+                // Only keep diameter and volume
                 const cleaned = {}
                 specFields.forEach(field => {
                     cleaned[field] = rawData[field] ?? 0
                 })
+                cleaned['Label'] = rawData['Label'] ?? ''
                 specs[docSnap.id] = cleaned
             })
 
@@ -44,20 +40,26 @@ const EditCavitySpecs = () => {
     }, [])
 
     const handleAddCavity = () => {
-        const newId = String(Object.keys(editableSpecs).length + 1)
         const newSpec = {}
         specFields.forEach(field => (newSpec[field] = 0))
-        setEditableSpecs(prev => ({ ...prev, [newId]: newSpec }))
+        newSpec['Label'] = ''
+        setEditableSpecs(prev => ({ ...prev, ['']: newSpec })) // temp empty key for new spec
     }
 
     const handleSave = async () => {
         try {
             const promises = Object.entries(editableSpecs).map(([id, spec]) => {
+                // Use Label and Volume as document ID
+                const docId = spec['Label'] && spec['Volume (ml)']
+                    ? `${spec['Label']} ${spec['Volume (ml)']}`
+                    : id // fallback to id if missing
+
                 const cleaned = {}
                 specFields.forEach(field => {
                     cleaned[field] = spec[field] ?? 0
                 })
-                return setDoc(doc(db, 'cavity_specs', id), cleaned, { merge: false })
+                cleaned['Label'] = spec['Label'] ?? ''
+                return setDoc(doc(db, 'cavity_specs', docId), cleaned, { merge: false })
             })
             await Promise.all(promises)
             alert("✅ All cavity specs saved cleanly to Firestore.")
@@ -120,7 +122,7 @@ const EditCavitySpecs = () => {
                             fontSize: '1.2rem',
                             marginBottom: '1rem'
                         }}>
-                            🧩 Cavity {id}
+                            🧩 {spec['Label'] ? spec['Label'] : 'Cavity'} {spec['Volume (ml)'] ? spec['Volume (ml)'] : ''}
                         </h4>
 
                         <button
@@ -144,7 +146,7 @@ const EditCavitySpecs = () => {
 
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
                             gap: '1rem'
                         }}>
                             {specFields.map(field => (
@@ -176,6 +178,33 @@ const EditCavitySpecs = () => {
                                     />
                                 </div>
                             ))}
+                            <div>
+                                <label style={{
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    color: '#2C5F2D'
+                                }}>
+                                    Label
+                                </label>
+                                <input
+                                    type="text"
+                                    value={spec['Label'] ?? ''}
+                                    onChange={(e) => {
+                                        const updated = { ...editableSpecs }
+                                        updated[id]['Label'] = e.target.value
+                                        setEditableSpecs(updated)
+                                    }}
+                                    style={{
+                                        padding: '8px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #ccc',
+                                        fontSize: '14px',
+                                        width: '100%',
+                                        backgroundColor: '#fdfdfd',
+                                        color: '#000'
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 ))}

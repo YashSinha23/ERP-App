@@ -86,7 +86,6 @@ function RawMaterialForm() {
                     <option value="Styrene">Styrene</option>
                     <option value="GPPS">GPPS</option>
                     <option value="Blue">Blue</option>
-                    <option value="Crush">Crush</option>
                 </select>
 
                 <label style={labelStyle}>Quantity (kg)</label>

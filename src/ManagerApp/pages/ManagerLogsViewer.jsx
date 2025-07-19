@@ -19,7 +19,9 @@ import PrintedCupsInventoryTable from '../components/tables/PrintedCupsInventory
 
 function ManagerLogsViewer({ initialTab = 'logs' }) {
   const [topTab, setTopTab] = useState(initialTab)
-  const [selectedCategory, setSelectedCategory] = useState('raw_material_logs')
+  const [selectedCategory, setSelectedCategory] = useState(
+    initialTab === 'inventory' ? 'raw_material_stock' : 'raw_material_logs'
+  )
   const [data, setData] = useState([])
   const [filterOptions, setFilterOptions] = useState({})
 
@@ -137,8 +139,6 @@ function ManagerLogsViewer({ initialTab = 'logs' }) {
     }
   }
 
-
-
   const sideBarCategories = topTab === 'logs' ? logCategories : inventoryCategories
 
   return (
@@ -176,7 +176,13 @@ function ManagerLogsViewer({ initialTab = 'logs' }) {
               <PrintButton data={filteredData} selectedCategory={selectedCategory} />
             </div>
           )}
-
+          {selectedCategory === 'sheet_forming_logs' && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+              <ExportButton data={filteredData} collectionName={selectedCategory} />
+              <PrintButton data={filteredData} selectedCategory={selectedCategory} />
+              {/* No EditButton here */}
+            </div>
+          )}
 
 
           {renderTable()}

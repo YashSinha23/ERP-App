@@ -33,7 +33,7 @@ const SheetFormingForm = () => {
 
 
 
-    const additiveOptions = ['Master Batch', 'Styrene', 'GPPS', 'Crush', 'JJ']
+    const additiveOptions = ['Master Batch', 'Styrene', 'GPPS', 'Blue', 'JJ']
 
     const handleAdditiveChange = (name) => (e) => {
         setAdditives(prev => ({

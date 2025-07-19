@@ -23,7 +23,6 @@ const PrintedCupsForm = () => {
     const [availableCups, setAvailableCups] = useState([])
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
-    const [printingLabel, setPrintingLabel] = useState('')
     const [timestamp, setTimestamp] = useState(dayjs())
 
 
@@ -34,7 +33,10 @@ const PrintedCupsForm = () => {
             const options = []
             snapshot.forEach(doc => {
                 const data = doc.data()
-                options.push({ id: doc.id, label: `Cavity ${data.cavity} - ${data.quantity} pcs` })
+                // Show cavity name as Label + Volume
+                let cavityName = data.specs && data.specs.Label ? data.specs.Label : `Cavity ${data.cavity}`;
+                if (data.specs && data.specs['Volume (ml)']) cavityName += ` ${data.specs['Volume (ml)']}`;
+                options.push({ id: doc.id, label: `${cavityName} - ${data.quantity} pcs` })
             })
             setAvailableCups(options)
         }
@@ -52,11 +54,11 @@ const PrintedCupsForm = () => {
 
         const produced = parseInt(printedCupsProduced)
         const rejected = parseInt(rejectedCups)
-        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp)) // ✅ correct position
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp))
 
         try {
-            const cupType = cupsUsed
-            const cupsStockRef = doc(db, 'cups_stock', cupType)
+            const cupTypeId = cupsUsed
+            const cupsStockRef = doc(db, 'cups_stock', cupTypeId)
             const cupsStockSnap = await getDoc(cupsStockRef)
 
             if (!cupsStockSnap.exists()) {
@@ -82,33 +84,36 @@ const PrintedCupsForm = () => {
             })
 
             // ✅ Add to printed cup stock
-            const printedStockRef = doc(db, 'printed_cups_stock', cupType)
+            const printedStockRef = doc(db, 'printed_cups_stock', cupTypeId)
             const printedStockSnap = await getDoc(printedStockRef)
 
             if (printedStockSnap.exists()) {
                 await updateDoc(printedStockRef, {
                     quantity: increment(produced),
-                    printing_label: printingLabel,
                     last_updated: convertedTimestamp
                 })
             } else {
                 await setDoc(printedStockRef, {
-                    type: cupType,
+                    type: cupTypeId,
                     quantity: produced,
-                    printing_label: printingLabel,
                     last_updated: convertedTimestamp
                 })
             }
 
             // 📝 Log the printed operation
+            const specs = cupsStockSnap.data().specs || {}
+            const cupTypeString = specs.Label
+                ? `${specs.Label} ${specs['Volume (ml)']}`
+                : cupTypeId
+
             await addDoc(collection(db, 'printed_cups_logs'), {
                 timestamp: convertedTimestamp,
                 shift: printShift,
                 operator: printOperator,
-                cup_type: cupType,
+                cup_type: cupTypeString,
+                specs,
                 cups_produced: produced,
-                rejected_cups: rejected,
-                printing_label: printingLabel
+                rejected_cups: rejected
             })
 
             alert("✅ Printed cup log submitted and inventory updated!")
@@ -166,15 +171,7 @@ const PrintedCupsForm = () => {
                     required
                     style={inputStyle}
                 />
-                <label style={labelStyle}>Printing Label</label>
-                <input
-                    type="text"
-                    value={printingLabel}
-                    onChange={(e) => setPrintingLabel(e.target.value)}
-                    style={inputStyle}
-                />
-
-
+                {/* Printing Label removed */}
                 <label style={labelStyle}>Rejected Cups</label>
                 <input
                     type="number"
@@ -196,7 +193,7 @@ const PrintedCupsForm = () => {
                         <p><b>Operator:</b> {printOperator}</p>
                         <p><b>Cups Used:</b> {cupsUsed}</p>
                         <p><b>Cups Produced:</b> {printedCupsProduced}</p>
-                        <p><b>Printing Label:</b> {printingLabel}</p>
+                        {/* Printing Label removed from confirm dialog */}
                         <p><b>Rejected Cups:</b> {rejectedCups}</p>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1rem' }}>

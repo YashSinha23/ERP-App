@@ -94,11 +94,14 @@ const CupMoldingForm = () => {
             })
 
             // ✅ Log cup molding
+            // Build cavity name as Label + Volume
+            let cavityName = cavityData.Label ? cavityData.Label : `Cavity ${cavity}`;
+            if (cavityData['Volume (ml)']) cavityName += ` ${cavityData['Volume (ml)']}`;
             await addDoc(collection(db, 'cup_molding_logs'), {
                 timestamp: convertedTimestamp,
                 shift: cupShift,
                 operator: cupOperator,
-                cavity: parseInt(cavity),
+                cavity: cavityName,
                 specs: cavityData,
                 sheet_used: sheetUsed,
                 sheet_consumed: consumed,
@@ -161,8 +164,10 @@ const CupMoldingForm = () => {
                 <label style={labelStyle}>Cavity</label>
                 <select value={cavity} onChange={(e) => setCavity(e.target.value)} required style={inputStyle}>
                     <option value="" disabled>Select Cavity</option>
-                    {Object.keys(cavitySpecs).map(id => (
-                        <option key={id} value={id}>Cavity {id}</option>
+                    {Object.entries(cavitySpecs).map(([id, spec]) => (
+                        <option key={id} value={id}>
+                          {spec.Label ? spec.Label : 'Cavity'} {spec['Volume (ml)'] ? spec['Volume (ml)'] : ''}
+                        </option>
                     ))}
                 </select>
 

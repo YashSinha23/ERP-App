@@ -10,7 +10,11 @@ const CupsInventoryTable = ({ data, safeTimestamp }) => (
         <tbody>
             {data.map((item, i) => (
                 <tr key={i}>
-                    <td>{item.id || '-'}</td>
+                    <td>
+                        {item.specs && item.specs.Label
+                            ? `${item.specs.Label} ${item.specs['Volume (ml)']}`
+                            : item.id || '-'}
+                    </td>
                     <td>{item.quantity || '-'}</td>
                     <td>{safeTimestamp(item.last_updated)}</td>
                 </tr>

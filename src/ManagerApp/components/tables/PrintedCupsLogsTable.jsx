@@ -17,7 +17,11 @@ const PrintedCupsLogsTable = ({ data, safeTimestamp }) => (
                     <td>{safeTimestamp(item.timestamp)}</td>
                     <td>{item.shift || '-'}</td>
                     <td>{item.operator || '-'}</td>
-                    <td>{item.cup_type || '-'}</td>
+                    <td>
+                        {item.specs && item.specs.Label
+                            ? `${item.specs.Label} ${item.specs['Volume (ml)']}`
+                            : item.cup_type || '-'}
+                    </td>
                     <td>{item.cups_produced || '-'}</td>
                     <td>{item.rejected_cups || '-'}</td>
                     <td>{item.printing_label || '-'}</td>

@@ -8,6 +8,7 @@ const SheetFormingLogsTable = ({ data, safeTimestamp }) => (
                 <th>Sheet Size</th>
                 <th>Thickness</th>
                 <th>Primary Material</th>
+                <th>Primary Quantity (kg)</th> {/* <-- Add this column */}
                 <th>Additives</th>
                 <th>Gola Scrap (kg)</th>
                 <th>Sheet Scrap (kg)</th>
@@ -23,6 +24,7 @@ const SheetFormingLogsTable = ({ data, safeTimestamp }) => (
                     <td>{item.size || '-'}</td>
                     <td>{item.thickness || '-'}</td>
                     <td>{item.primary_material || '-'}</td>
+                    <td>{item.primary_quantity || '-'}</td> {/* <-- Add this cell */}
                     <td>
                         {item.additives
                             ? Object.entries(item.additives).map(([k, v]) => `${k}: ${v}`).join(', ')

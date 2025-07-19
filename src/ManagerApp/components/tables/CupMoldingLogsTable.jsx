@@ -18,7 +18,11 @@ const CupMoldingLogsTable = ({ data, safeTimestamp }) => (
                     <td>{safeTimestamp(item.timestamp)}</td>
                     <td>{item.shift || '-'}</td>
                     <td>{item.operator || '-'}</td>
-                    <td>{item.cavity || '-'}</td>
+                    <td>
+                        {item.specs && item.specs.Label
+                            ? `${item.specs.Label} ${item.specs['Volume (ml)']}`
+                            : item.cavity || '-'}
+                    </td>
                     <td>{item.sheet_used || '-'}</td>
                     <td>{item.sheet_consumed || '-'}</td>
                     <td>{item.cups_produced || '-'}</td>
