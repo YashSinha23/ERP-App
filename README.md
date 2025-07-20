@@ -51,8 +51,8 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/almed-unified-logs-app.git
-   cd almed-unified-logs-app
+   git clone https://github.com/YashSinha23/ERP-App.git
+   cd unified-logs-app
    ```
 
 2. **Install dependencies**
