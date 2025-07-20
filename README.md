@@ -81,11 +81,3 @@ src/
 
 Pull requests are welcome!  
 Please open an issue for major changes or feature requests.
-
-## License
-
-MIT
-
----
-
-**Made with ❤️ by
