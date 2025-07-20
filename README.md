@@ -1,12 +1,91 @@
-# React + Vite
+# Almed Unified Logs App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack React + Firebase application for managing production logs and live inventory in a manufacturing environment.  
+Supports raw material, sheet forming, cup molding, and printed cups workflows for both operators and managers.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Operator Portal**
+  - Log raw material usage and inward entries
+  - Sheet forming logs with additives and scrap tracking
+  - Cup molding logs with cavity specs and sheet consumption
+  - Printed cups logs with cup type and rejection tracking
 
-## Expanding the ESLint configuration
+- **Manager Portal**
+  - View, filter, export, and print all logs
+  - Live inventory dashboard for all material types
+  - Edit cavity specs and manage database
+  - Secure login for manager access
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Inventory Sync**
+  - Automatic inventory updates on every log entry
+  - Real-time stock tracking for raw materials, sheets, cups, and printed cups
+
+## Tech Stack
+
+- **Frontend:** React, Material UI
+- **Backend:** Firebase Firestore
+- **Routing:** React Router
+- **Date Handling:** Dayjs
+- **Export/Print:** XLSX, FileSaver
+
+## Folder Structure
+
+```
+src/
+  App.jsx, App.css
+  firebase/
+    firebaseConfig.js
+  ManagerApp/
+    components/
+    pages/
+  OperatorApp/
+    forms/
+    layout/
+  pages/
+    Login.jsx
+    RoleSelector.jsx
+```
+
+## Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/almed-unified-logs-app.git
+   cd almed-unified-logs-app
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Firebase**
+   - Update `src/firebase/firebaseConfig.js` with your Firebase project credentials.
+
+4. **Run the app**
+   ```bash
+   npm run dev
+   ```
+   The app will be available at `http://localhost:5173`.
+
+## Usage
+
+- **Operator:**  
+  Select your role, fill out the relevant forms, and submit logs. Inventory updates automatically.
+
+- **Manager:**  
+  Login with manager credentials, view logs, filter/export/print data, and monitor live inventory.
+
+## Contributing
+
+Pull requests are welcome!  
+Please open an issue for major changes or feature requests.
+
+## License
+
+MIT
+
+---
+
+**Made with ❤️ by
