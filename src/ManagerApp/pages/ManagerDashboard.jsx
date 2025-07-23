@@ -42,6 +42,7 @@ const menuItems = [
   }
 ]
 
+const unavailableIds = ['employees', 'payments', 'sales'] // IDs for unavailable features
 
 const ManagerDashboard = () => {
   const navigate = useNavigate()
@@ -54,11 +55,20 @@ const ManagerDashboard = () => {
           {menuItems.map((item) => (
             <div
               key={item.id}
-              style={cardStyle}
-              onClick={() => navigate(`/manager/${item.path}`)}
+              style={unavailableIds.includes(item.id) ? unavailableCardStyle : cardStyle}
+              onClick={() => {
+                if (!unavailableIds.includes(item.id)) {
+                  navigate(`/manager/${item.path}`)
+                }
+              }}
             >
               {item.icon}
               <span style={labelStyle}>{item.label}</span>
+              {unavailableIds.includes(item.id) && (
+                <span style={{ color: '#e57373', marginTop: '0.5rem', fontSize: '14px' }}>
+                  Coming Soon
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -102,7 +112,6 @@ const cardWrapper = {
   padding: '0 1rem'
 }
 
-
 const cardStyle = {
   backgroundColor: '#fff',
   borderRadius: '12px',
@@ -116,6 +125,13 @@ const cardStyle = {
   boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
   transition: 'transform 0.2s',
   fontSize: '18px',
+}
+
+const unavailableCardStyle = {
+  ...cardStyle,
+  backgroundColor: '#ffeaea', // Light red tint
+  border: '1.5px solid #e57373', // Optional: red border for more emphasis
+  cursor: 'not-allowed'
 }
 
 const labelStyle = {
