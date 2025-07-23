@@ -20,6 +20,7 @@ const PrintedCupsForm = () => {
     const [cupsUsed, setCupsUsed] = useState('')
     const [printedCupsProduced, setPrintedCupsProduced] = useState('')
     const [rejectedCups, setRejectedCups] = useState('')
+    const [totalCupsProduced, setTotalCupsProduced] = useState('')
     const [availableCups, setAvailableCups] = useState([])
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -52,6 +53,7 @@ const PrintedCupsForm = () => {
     const handleConfirm = async () => {
         setSubmitting(true)
 
+        const totalProduced = parseInt(totalCupsProduced)
         const produced = parseInt(printedCupsProduced)
         const rejected = parseInt(rejectedCups)
         const convertedTimestamp = Timestamp.fromDate(new Date(timestamp))
@@ -113,7 +115,8 @@ const PrintedCupsForm = () => {
                 cup_type: cupTypeString,
                 specs,
                 cups_produced: produced,
-                rejected_cups: rejected
+                rejected_cups: rejected,
+                total_cups_produced: totalProduced // <-- Added field
             })
 
             alert("✅ Printed cup log submitted and inventory updated!")
@@ -134,6 +137,7 @@ const PrintedCupsForm = () => {
         setCupsUsed('')
         setPrintedCupsProduced('')
         setRejectedCups('')
+        setTotalCupsProduced('')
     }
 
     return (
@@ -162,7 +166,17 @@ const PrintedCupsForm = () => {
                     ))}
                 </select>
 
-                <label style={labelStyle}>Cups Produced</label>
+                <label style={labelStyle}>Total Cups Produced</label>
+                <input
+                    type="number"
+                    value={totalCupsProduced}
+                    onChange={(e) => setTotalCupsProduced(e.target.value)}
+                    onWheel={(e) => e.target.blur()}
+                    required
+                    style={inputStyle}
+                />
+
+                <label style={labelStyle}>Usable Cups Produced</label>
                 <input
                     type="number"
                     value={printedCupsProduced}
@@ -192,6 +206,7 @@ const PrintedCupsForm = () => {
                         <p><b>Shift:</b> {printShift}</p>
                         <p><b>Operator:</b> {printOperator}</p>
                         <p><b>Cups Used:</b> {cupsUsed}</p>
+                        <p><b>Total Cups Produced:</b> {totalCupsProduced}</p>
                         <p><b>Cups Produced:</b> {printedCupsProduced}</p>
                         {/* Printing Label removed from confirm dialog */}
                         <p><b>Rejected Cups:</b> {rejectedCups}</p>

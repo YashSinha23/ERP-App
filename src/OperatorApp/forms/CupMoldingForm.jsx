@@ -21,6 +21,7 @@ const CupMoldingForm = () => {
     const [sheetConsumed, setSheetConsumed] = useState('')
     const [cupsProduced, setCupsProduced] = useState('')
     const [rejectedCups, setRejectedCups] = useState('')
+    const [totalCupsProduced, setTotalCupsProduced] = useState('')
     const [availableSheets, setAvailableSheets] = useState([])
     const [showConfirm, setShowConfirm] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -59,10 +60,11 @@ const CupMoldingForm = () => {
     const handleConfirm = async () => {
         setSubmitting(true)
 
-        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp)) // ✅ Manual timestamp
+        const convertedTimestamp = Timestamp.fromDate(new Date(timestamp))
         const consumed = parseFloat(sheetConsumed)
         const produced = parseInt(cupsProduced)
         const rejected = parseInt(rejectedCups)
+        const totalProduced = parseInt(totalCupsProduced)
         const cavityData = cavitySpecs[cavity] || {}
 
         try {
@@ -106,7 +108,8 @@ const CupMoldingForm = () => {
                 sheet_used: sheetUsed,
                 sheet_consumed: consumed,
                 cups_produced: produced,
-                rejected_cups: rejected
+                rejected_cups: rejected,
+                total_cups_produced: totalProduced // <-- Added field
             })
 
             // ✅ Update cups stock
@@ -140,6 +143,7 @@ const CupMoldingForm = () => {
         setSheetConsumed('')
         setCupsProduced('')
         setRejectedCups('')
+        setTotalCupsProduced('')
     }
 
 
@@ -192,11 +196,21 @@ const CupMoldingForm = () => {
                     style={inputStyle}
                 />
 
-                <label style={labelStyle}>Cups Produced</label>
+                <label style={labelStyle}>Usable Cups Produced</label>
                 <input
                     type="number"
                     value={cupsProduced}
                     onChange={(e) => setCupsProduced(e.target.value)}
+                    onWheel={(e) => e.target.blur()}
+                    required
+                    style={inputStyle}
+                />
+
+                <label style={labelStyle}>Total Cups Produced</label>
+                <input
+                    type="number"
+                    value={totalCupsProduced}
+                    onChange={(e) => setTotalCupsProduced(e.target.value)}
                     onWheel={(e) => e.target.blur()}
                     required
                     style={inputStyle}
@@ -227,6 +241,7 @@ const CupMoldingForm = () => {
                         <p><b>Sheet Used:</b> {sheetUsed}</p>
                         <p><b>Sheet Consumed:</b> {sheetConsumed} kg</p>
                         <p><b>Cups Produced:</b> {cupsProduced}</p>
+                        <p><b>Total Cups Produced:</b> {totalCupsProduced}</p>
                         <p><b>Rejected Cups:</b> {rejectedCups}</p>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '1rem' }}>
